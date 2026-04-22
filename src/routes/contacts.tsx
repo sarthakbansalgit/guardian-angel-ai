@@ -1,6 +1,7 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureSession } from "@/lib/ensure-session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +16,6 @@ export const Route = createFileRoute("/contacts")({
 interface Contact { id: string; name: string; phone: string; relationship: string | null; }
 
 function Contacts() {
-  const router = useRouter();
   const [items, setItems] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
@@ -23,8 +23,8 @@ function Contacts() {
   const [rel, setRel] = useState("");
 
   const load = async () => {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) { router.navigate({ to: "/auth" }); return; }
+    const uid = await ensureSession();
+    if (!uid) { toast.error("Session unavailable."); setLoading(false); return; }
     const { data, error } = await supabase.from("emergency_contacts").select("*").order("created_at", { ascending: false });
     if (error) toast.error(error.message);
     setItems((data ?? []) as Contact[]);
@@ -35,10 +35,10 @@ function Contacts() {
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return;
+    const uid = await ensureSession();
+    if (!uid) { toast.error("Session unavailable."); return; }
     const { error } = await supabase.from("emergency_contacts").insert({
-      user_id: userData.user.id, name, phone, relationship: rel || null,
+      user_id: uid, name, phone, relationship: rel || null,
     });
     if (error) toast.error(error.message);
     else { toast.success("Contact added"); setName(""); setPhone(""); setRel(""); load(); }

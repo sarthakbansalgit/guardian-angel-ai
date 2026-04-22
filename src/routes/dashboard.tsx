@@ -1,6 +1,7 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureSession } from "@/lib/ensure-session";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Shield, MapPin, AlertTriangle, CheckCircle2, Loader2, Sparkles } from "lucide-react";
@@ -28,8 +29,7 @@ interface LocState {
 }
 
 function Dashboard() {
-  const router = useRouter();
-  const [authChecked, setAuthChecked] = useState(false);
+  const [ready, setReady] = useState(false);
   const [message, setMessage] = useState("");
   const [loc, setLoc] = useState<LocState>({ lat: 0, lng: 0, status: "idle" });
   const [analyzing, setAnalyzing] = useState(false);
@@ -37,15 +37,15 @@ function Dashboard() {
   const [destination, setDestination] = useState<SafeHaven | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) router.navigate({ to: "/auth" });
-      else setAuthChecked(true);
+    ensureSession().then((uid) => {
+      if (uid) setReady(true);
+      else toast.error("Could not initialize session.");
     });
-  }, [router]);
+  }, []);
 
   // Fetch location on mount
   useEffect(() => {
-    if (!authChecked) return;
+    if (!ready) return;
     setLoc((s) => ({ ...s, status: "loading" }));
     if (!navigator.geolocation) {
       // fallback
@@ -60,7 +60,7 @@ function Dashboard() {
       },
       { enableHighAccuracy: true, timeout: 8000 },
     );
-  }, [authChecked]);
+  }, [ready]);
 
   const hotspots = useMemo(() => (loc.status === "ready" ? generateHotspots(loc.lat, loc.lng) : []), [loc]);
   const havens = useMemo(() => (loc.status === "ready" ? suggestSafeHavens(loc.lat, loc.lng) : []), [loc]);
@@ -109,7 +109,7 @@ function Dashboard() {
     setAnalyzing(false);
   };
 
-  if (!authChecked) {
+  if (!ready) {
     return (
       <main className="grid min-h-[calc(100vh-65px)] place-items-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

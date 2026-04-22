@@ -1,6 +1,7 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureSession } from "@/lib/ensure-session";
 import { Loader2, MapPin } from "lucide-react";
 
 export const Route = createFileRoute("/history")({
@@ -21,19 +22,18 @@ interface Incident {
 }
 
 function History() {
-  const router = useRouter();
   const [items, setItems] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) { router.navigate({ to: "/auth" }); return; }
+      const uid = await ensureSession();
+      if (!uid) { setLoading(false); return; }
       const { data } = await supabase.from("incidents").select("*").order("created_at", { ascending: false });
       setItems((data ?? []) as Incident[]);
       setLoading(false);
     })();
-  }, [router]);
+  }, []);
 
   const color = (l: string | null) =>
     l === "high" ? "var(--danger)" : l === "medium" ? "var(--warn)" : "var(--safe)";
