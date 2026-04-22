@@ -1,8 +1,5 @@
-import { Outlet, Link, createRootRoute, HeadContent, Scripts, useRouter } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Shield, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { Shield } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
@@ -63,22 +60,6 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function Navbar() {
-  const [email, setEmail] = useState<string | null>(null);
-  const router = useRouter();
-
-  useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setEmail(session?.user?.email ?? null);
-    });
-    supabase.auth.getSession().then(({ data }) => setEmail(data.session?.user?.email ?? null));
-    return () => sub.subscription.unsubscribe();
-  }, []);
-
-  const logout = async () => {
-    await supabase.auth.signOut();
-    router.navigate({ to: "/" });
-  };
-
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
@@ -88,20 +69,10 @@ function Navbar() {
           </div>
           <span className="font-display text-lg font-bold tracking-tight">SafeHer</span>
         </Link>
-        <div className="flex items-center gap-2">
-          {email ? (
-            <>
-              <Link to="/dashboard" className="hidden sm:block text-sm text-muted-foreground hover:text-foreground transition">Dashboard</Link>
-              <Link to="/contacts" className="hidden sm:block text-sm text-muted-foreground hover:text-foreground transition">Contacts</Link>
-              <Link to="/history" className="hidden sm:block text-sm text-muted-foreground hover:text-foreground transition">History</Link>
-              <Button variant="ghost" size="sm" onClick={logout}><LogOut className="h-4 w-4 mr-1" />Logout</Button>
-            </>
-          ) : (
-            <>
-              <Link to="/auth"><Button variant="ghost" size="sm">Sign in</Button></Link>
-              <Link to="/auth"><Button size="sm" className="bg-primary hover:bg-primary/90">Get protected</Button></Link>
-            </>
-          )}
+        <div className="flex items-center gap-4">
+          <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-foreground transition">Dashboard</Link>
+          <Link to="/contacts" className="text-sm text-muted-foreground hover:text-foreground transition">Contacts</Link>
+          <Link to="/history" className="text-sm text-muted-foreground hover:text-foreground transition">History</Link>
         </div>
       </nav>
     </header>
