@@ -42,14 +42,14 @@ function Index() {
           recommendation into one tap. Built for the moments that matter most.
         </p>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-          <Link to="/auth">
+          <Link to="/dashboard">
             <Button size="lg" className="h-14 px-8 text-base bg-primary hover:bg-primary/90 shadow-[var(--shadow-glow)]">
               Activate SafeHer
             </Button>
           </Link>
-          <Link to="/dashboard">
+          <Link to="/contacts">
             <Button size="lg" variant="outline" className="h-14 px-8 text-base">
-              Open dashboard
+              Add contacts
             </Button>
           </Link>
         </div>
